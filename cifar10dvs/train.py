@@ -310,7 +310,8 @@ def main(args):
     train_tb_writer = None
     te_tb_writer = None
 
-    utils.init_distributed_mode(args)
+    args.distributed = False
+    # utils.init_distributed_mode(args)
     print(args)
 
     output_dir = os.path.join(args.output_dir, f'{args.model}_b{args.batch_size}_T{args.T}')
