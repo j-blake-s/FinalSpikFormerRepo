@@ -31,6 +31,15 @@ torch.backends.cudnn.benchmark = False
 import numpy as np
 # np.random.seed(_seed_)
 writer = SummaryWriter("./")
+
+def format(num):
+  whole, decimal = str(num).split(".")
+  if len(whole) < 2: whole = "0"+whole
+  if len(decimal) < 2: decimal = decimal + "0"
+  return f'{whole}.{decimal}'
+  
+
+
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser(description='PyTorch Classification Training')
@@ -40,6 +49,8 @@ def parse_args():
     parser.add_argument('--num-classes', type=int, default=10, metavar='N',
                         help='number of label classes (default: 1000)')
     parser.add_argument('--data-path', default='/data/SpikeJelly/cifar10dvs', help='dataset')
+    parser.add_argument('--file', default='out/default.txt', type=str)
+
     parser.add_argument('--device', default='cuda:1', help='device')
     parser.add_argument('-b', '--batch-size', default=16, type=int)
     parser.add_argument('--heads', default=1, type=int)
@@ -373,6 +384,10 @@ def main(args):
     print("Creating model")
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"number of params: {n_parameters}")
+    with open(args.file, 'w') as f: 
+      f.write(f'Parameters: {n_parameters:,}\n')
+      f.write(f'         \t| Train | Test |\n')
+
     model.to(device)
     if args.distributed and args.sync_bn:
         model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
@@ -454,6 +469,12 @@ def main(args):
         print(f'{epoch+1}/{num_epochs} | Train {train_acc1:.3f} | Test {test_acc1:.3f}')
         print()
         print('#'*50)
+
+        with open(args.file, 'a') as f:
+          f.write(f'[{epoch+1}/{num_epochs}] \t| {format(round(train_acc1,2))} | {format(round(test_acc1,2))} |\n')
+
+
+
 
         if te_tb_writer is not None:
             if utils.is_main_process():
